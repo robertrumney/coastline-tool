@@ -6,6 +6,7 @@ public class TerrainCoastlineTool : EditorWindow
     public Terrain[] terrains;
     public float smoothFactor = 0.5f;
     public int brushSize = 10;
+    public int blendDistance = 5; // Distance to blend nearby vertices
 
     [MenuItem("Tools/Terrain Coastline Tool")]
     public static void ShowWindow()
@@ -22,6 +23,9 @@ public class TerrainCoastlineTool : EditorWindow
 
         // Brush Size
         brushSize = EditorGUILayout.IntSlider("Brush Size", brushSize, 1, 100);
+
+        // Blend Distance
+        blendDistance = EditorGUILayout.IntSlider("Blend Distance", blendDistance, 1, 50);
 
         // Select Terrains
         SerializedObject serializedObject = new SerializedObject(this);
@@ -138,9 +142,13 @@ public class TerrainCoastlineTool : EditorWindow
         {
             if (AreTerrainsAdjacentOnXAxis(terrainA, terrainB))
             {
-                float averageHeight = (heightsA[x, resolution - 1] + heightsB[x, 0]) / 2;
-                heightsA[x, resolution - 1] = averageHeight;
-                heightsB[x, 0] = averageHeight;
+                for (int d = 0; d < blendDistance; d++)
+                {
+                    float t = (float)d / blendDistance;
+                    float blendedHeight = Mathf.Lerp(heightsA[x, resolution - 1 - d], heightsB[x, d], t);
+                    heightsA[x, resolution - 1 - d] = blendedHeight;
+                    heightsB[x, d] = blendedHeight;
+                }
             }
         }
 
@@ -148,9 +156,13 @@ public class TerrainCoastlineTool : EditorWindow
         {
             if (AreTerrainsAdjacentOnZAxis(terrainA, terrainB))
             {
-                float averageHeight = (heightsA[resolution - 1, z] + heightsB[0, z]) / 2;
-                heightsA[resolution - 1, z] = averageHeight;
-                heightsB[0, z] = averageHeight;
+                for (int d = 0; d < blendDistance; d++)
+                {
+                    float t = (float)d / blendDistance;
+                    float blendedHeight = Mathf.Lerp(heightsA[resolution - 1 - d, z], heightsB[d, z], t);
+                    heightsA[resolution - 1 - d, z] = blendedHeight;
+                    heightsB[d, z] = blendedHeight;
+                }
             }
         }
 
